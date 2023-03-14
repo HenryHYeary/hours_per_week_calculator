@@ -4,24 +4,19 @@ block main
   form(action="/strategies" method="post")
     dl
       dt
-        label(for="stratTitle") Enter the name for your new strategy and your target date:
+        label(for="stratTitle") Enter the name for your new strategy
       dd
         input(type="text"
               id="stratTitle"
               name="stratTitle"
               placeholder="Strategy Title")
+      dt 
+        label(for="year") Enter your target date to finish:
+      dd
         input(type="text"
-              id="year"
-              name="year"
-              placeholder="Year")
-        input(type="text"
-              id="month"
-              name="month"
-              placeholder="Month")
-        input(type="text"
-              id="day"
-              name="day"
-              placeholder="Day")
+              id="targetDate"
+              name="targetDate"
+              placeholder="YYYY/MM/DD")
 
       fieldset.actions
         input(type="submit" value="Save")

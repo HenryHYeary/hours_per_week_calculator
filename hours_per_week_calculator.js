@@ -33,12 +33,14 @@ Should divide the number of total hours by 6 times the current number of weeks l
 
 const express = require("express");
 const morgan = require("morgan");
+const flash = require("express-flash");
+const session = require("express-session");
+const { body, validationResult } = require("express-validator");
 const Strategy = require('./lib/strategies');
 
 const app = express();
 const host = "localhost";
 const port = 3000;
-
 let strats = require('./lib/seed-data');
 
 app.set("views", "./views");
@@ -47,6 +49,21 @@ app.set("view engine", "pug");
 app.use(morgan("common"));
 app.use(express.static("public"));
 app.use(express.urlencoded({ extended: false }));
+
+app.use(session({
+  name: "hours-per-week-calc-session-id",
+  resave: false,
+  saveUninitialized: true,
+  secret: "this is not very secure",
+}));
+
+app.use(flash());
+
+app.use((req, res, next) => {
+  res.locals.flash = req.session.flash;
+  delete req.session.flash;
+  next();
+});
 
 const sortStrategies = strats => {
   return strats.slice().sort((stratA, stratB) => {
@@ -63,7 +80,13 @@ const sortStrategies = strats => {
   });
 };
 
+
+
 app.get("/", (req, res) => {
+  res.redirect("/strategies");
+})
+
+app.get("/strategies", (req, res) => {
     res.render("strategies", {
       strats: sortStrategies(strats),
     });
@@ -73,9 +96,40 @@ app.get("/strategies/new", (req, res) => {
   res.render("new-strategy");
 });
 
-app.post("/strategies", (req, res) => {
-  let title = req.body.stratTitle.trim();
-  strats.push(new Strategy(title));
+app.post("/strategies",
+  [
+    body("stratTitle")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("The list title is required.")
+      .isLength({ max: 100 })
+      .withMessage("List title must be between 1 and 100 characters.")
+      .custom(title => {
+        let duplicate = strats.find(strat => strat.title === title);
+        return duplicate === undefined;
+      })
+      .withMessage("List title must be unique."),
+    body("targetDate")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("A target date is required.")
+      .isDate()
+      .withMessage("Date must be in YYYY/MM/DD format.")
+  ],
+  (req, res) => {
+    let errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      errors.array().forEach(message => req.flash("error", message.msg));
+      res.render("new-strategy", {
+        flash: req.flash(),
+        stratTitle: req.body.stratTitle,
+        targetDate: req.body.targetDate
+      });
+    } else {
+      strats.push(new Strategy(req.body.stratTitle, req.body.targetDate));
+      req.flash("success", "The strategy has been created.");
+      res.redirect("/strategies");
+    }
 });
 
 app.listen(port, host, () => {
