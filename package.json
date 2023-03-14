@@ -1,0 +1,30 @@
+{
+  "name": "how_long_will_it_take",
+  "version": "1.0.0",
+  "description": "",
+  "main": "hours_per_week_calculator.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HenryHYeary/how_long_will_it_take.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HenryHYeary/how_long_will_it_take/issues"
+  },
+  "homepage": "https://github.com/HenryHYeary/how_long_will_it_take#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "pug": "^3.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.21"
+  }
+}
