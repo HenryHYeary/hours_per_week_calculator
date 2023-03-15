@@ -109,6 +109,18 @@ app.post("/strategies",
         return duplicate === undefined;
       })
       .withMessage("List title must be unique."),
+    body("startDate")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("A start date is required.")
+      .isDate()
+      .withMessage("Date must be in YYYY/MM/DD format."),
+    body("hoursLeft")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("Number of hours left is required.")
+      .isNumeric({ no_symbols: true })
+      .withMessage("Number of hours must be a positive integer"),
     body("targetDate")
       .trim()
       .isLength({ min: 1 })
@@ -123,10 +135,11 @@ app.post("/strategies",
       res.render("new-strategy", {
         flash: req.flash(),
         stratTitle: req.body.stratTitle,
-        targetDate: req.body.targetDate
+        targetDate: req.body.targetDate,
+        hoursLeft: req.body.hoursLeft,
       });
     } else {
-      strats.push(new Strategy(req.body.stratTitle, req.body.targetDate));
+      strats.push(new Strategy(req.body.stratTitle));
       req.flash("success", "The strategy has been created.");
       res.redirect("/strategies");
     }

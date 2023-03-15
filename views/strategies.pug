@@ -4,12 +4,11 @@ block main
   if strats == undefined || strats.length === 0
     p#no_list You don't have any strategies listed. Why not create one?
   else
-    ul#strats Target date listed next to strategy title in locale format.
-
+    ul#strats
       each strat in strats
         li(class=strat)
           a(href=`/strategies/${strat.id}`)
-            h2=strat.title + ' ' + strat.targetDate.toLocaleDateString()
+            h2=strat.title
 
 block headerLinks
   .actions
