@@ -67,8 +67,8 @@ app.use((req, res, next) => {
 
 const sortStrategies = strats => {
   return strats.slice().sort((stratA, stratB) => {
-    let titleA = stratA.title.toLowerCase();
-    let titleB = stratB.title.toLowerCase();
+    let titleA = stratA.stratTitle.toLowerCase();
+    let titleB = stratB.stratTitle.toLowerCase();
 
     if (titleA < titleB) {
       return -1;
@@ -80,7 +80,9 @@ const sortStrategies = strats => {
   });
 };
 
-
+const loadStrategy = stratId => {
+  return strats.find(strat => strat.id === stratId);
+}
 
 app.get("/", (req, res) => {
   res.redirect("/strategies");
@@ -114,19 +116,25 @@ app.post("/strategies",
       .isLength({ min: 1 })
       .withMessage("A start date is required.")
       .isDate()
-      .withMessage("Date must be in YYYY/MM/DD format."),
-    body("hoursLeft")
-      .trim()
-      .isLength({ min: 1 })
-      .withMessage("Number of hours left is required.")
-      .isNumeric({ no_symbols: true })
-      .withMessage("Number of hours must be a positive integer"),
+      .withMessage("Start Date must be in YYYY/MM/DD format."),
     body("targetDate")
       .trim()
       .isLength({ min: 1 })
       .withMessage("A target date is required.")
       .isDate()
-      .withMessage("Date must be in YYYY/MM/DD format.")
+      .withMessage("Target Date must be in YYYY/MM/DD format."),
+    body("hoursLeft")
+      .trim()
+      .isInt()
+      .withMessage("Number of hours must be a positive integer"),
+    body("vacationDays")
+      .trim()
+      .isInt()
+      .withMessage("Number of vacation days must be a positive integer."),
+    body("daysToWork")
+      .trim()
+      .isInt()
+      .withMessage("Days planned to work per week must be a positive integer.")
   ],
   (req, res) => {
     let errors = validationResult(req);
@@ -136,14 +144,40 @@ app.post("/strategies",
         flash: req.flash(),
         stratTitle: req.body.stratTitle,
         targetDate: req.body.targetDate,
+        startDate: req.body.startDate,
         hoursLeft: req.body.hoursLeft,
+        vacationDays: req.body.vacationDays,
+        daysToWork: req.body.daysToWork,
       });
     } else {
-      strats.push(new Strategy(req.body.stratTitle));
+      let body = req.body;
+      let argArr = [
+        body.stratTitle,
+        body.startDate,
+        body.targetDate,
+        Number(body.hoursLeft),
+        Number(body.vacationDays),
+        Number(body.daysToWork),
+      ];
+      strats.push(new Strategy(...argArr));
       req.flash("success", "The strategy has been created.");
       res.redirect("/strategies");
     }
 });
+
+app.get("/strategies/:stratId", (req, res, next) => {
+  let stratId = req.params.stratId;
+  let strat = loadStrategy(+stratId);
+  let hoursPerDay = strat.getHoursNeededPerDay();
+  if (!strat) {
+    next(new Error("Not found."));
+  } else {
+    res.render("strategy", {
+      strat: strat,
+      hoursPerDay: hoursPerDay
+    });
+  }
+})
 
 app.listen(port, host, () => {
   console.log(`Todos is listening on port ${port} of ${host}!`);

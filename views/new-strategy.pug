@@ -18,6 +18,13 @@ block main
               name="startDate"
               placeholder="YYYY/MM/DD")
       dt
+        label(for="targetDate") Enter your target date to finish Core: 
+      dd
+        input(type="text"
+              id="targetDate"
+              name="targetDate"
+              placeholder="YYYY/MM/DD")
+      dt
         label(for="hoursLeft") Enter the number of hours you have left to finish Core (average total for all of Core is 1200 hours):
       dd
         input(type="text"
@@ -38,13 +45,6 @@ block main
               id="daysToWork"
               name="daysToWork"
               placeholder="Days to Work Per Week")
-      dt
-        label(for="targetDate") Enter your target date to finish Core: 
-      dd
-        input(type="text"
-              id="daysToWork"
-              name="daysToWork"
-              placeholder="YYY/MM/DD")
 
       fieldset.actions
         input(type="submit" value="Save")
