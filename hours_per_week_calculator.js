@@ -84,6 +84,15 @@ const loadStrategy = stratId => {
   return strats.find(strat => strat.id === stratId);
 }
 
+const deleteStrategy = stratId => {
+  let strat = loadStrategy(stratId);
+  if (!strat) return false;
+  let stratIndex = strats.indexOf(strat);
+
+  strats.splice(stratIndex, 1);
+  return true;
+}
+
 app.get("/", (req, res) => {
   res.redirect("/strategies");
 })
@@ -177,7 +186,103 @@ app.get("/strategies/:stratId", (req, res, next) => {
       hoursPerDay: hoursPerDay
     });
   }
-})
+});
+
+app.get("/strategies/:stratId/edit", (req, res, next) => {
+  let stratId = req.params.stratId;
+  let strat = loadStrategy(+stratId);
+  if (!strat) {
+    next(new Error("Not found."));
+  } else {
+    res.render("edit-strategy", { strat });
+  }
+});
+
+app.post("/strategies/:stratId/destroy", (req, res, next) => {
+  let stratId = req.params.stratId;
+  let deleted = deleteStrategy(+stratId);
+  if (!deleted) {
+    next(new Error("Not found."));
+  } else {
+    req.flash("success", "Strategy deleted.");
+    res.redirect("/strategies");
+  }
+});
+
+app.post("/strategies/:stratId/edit",
+  [
+    body("stratTitle")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("The list title is required.")
+      .isLength({ max: 100 })
+      .withMessage("List title must be between 1 and 100 characters.")
+      .custom(title => {
+        let duplicate = strats.find(strat => strat.title === title);
+        return duplicate === undefined;
+      })
+      .withMessage("List title must be unique."),
+    body("startDate")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("A start date is required.")
+      .isDate()
+      .withMessage("Start Date must be in YYYY/MM/DD format."),
+    body("targetDate")
+      .trim()
+      .isLength({ min: 1 })
+      .withMessage("A target date is required.")
+      .isDate()
+      .withMessage("Target Date must be in YYYY/MM/DD format."),
+    body("hoursLeft")
+      .trim()
+      .isInt()
+      .withMessage("Number of hours must be a positive integer"),
+    body("vacationDays")
+      .trim()
+      .isInt()
+      .withMessage("Number of vacation days must be a positive integer."),
+    body("daysToWork")
+      .trim()
+      .isInt()
+      .withMessage("Days planned to work per week must be a positive integer.")
+  ],
+  (req, res, next) => {
+    let stratId = req.params.stratId;
+    let strat = loadStrategy(+stratId);
+    if (!strat) next(new Error("Not found."));
+    let body = req.body;
+    let { stratTitle, startDate, targetDate, hoursLeft, vacationDays, daysToWork } = body;
+    let errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      errors.array().forEach(message => req.flash("error", message.msg));
+      res.render("edit-strategy", {
+        flash: req.flash(),
+        strat,
+        stratTitle,
+        targetDate,
+        startDate,
+        hoursLeft,
+        vacationDays,
+        daysToWork
+      });
+    } else {
+      strat.setStratTitle(stratTitle);
+      strat.setStartDate(startDate);
+      strat.setTargetDate(targetDate);
+      strat.setHoursLeft(hoursLeft);
+      strat.setVacationDays(vacationDays);
+      strat.setDaysToWork(daysToWork);
+      req.flash("success", "The strategy has been updated.");
+      res.redirect(`/strategies/${stratId}`);
+    }
+});
+
+app.use((err, req, res, _next) => {
+  console.log(err); // Writes more extensive information to the console log
+  res.status(404).send(err.message);
+});
+
 
 app.listen(port, host, () => {
   console.log(`Todos is listening on port ${port} of ${host}!`);

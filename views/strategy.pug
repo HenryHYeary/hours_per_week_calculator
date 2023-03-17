@@ -8,9 +8,9 @@ block main
       dt Strategy Name:
         dd=strat.stratTitle
       dt Start Date:
-        dd=strat.startDate.toLocaleDateString()
+        dd=strat.stringStartDate
       dt Target Date:
-        dd=strat.targetDate.toLocaleDateString()
+        dd=strat.stringTargetDate
       dt Hours Left:
         dd=strat.hoursLeft
       dt Vacation Days:
@@ -19,3 +19,6 @@ block main
         dd=strat.daysToWork
       
       h3="Hours per Day Needed to Make Goal: " + hoursPerDay
+
+      form(action=`/strategies/${strat.id}/edit` method="get")
+        button.edit(type="submit") Edit Strategy
