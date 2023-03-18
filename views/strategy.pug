@@ -18,7 +18,7 @@ block main
       dt Days to Work Per Week:
         dd=strat.daysToWork
       
-      h3="Hours per Day Needed to Make Goal: " + hoursPerDay
+      h3="Hours per Day Needed to Make Goal: " + strat.hoursPerDay
 
       form(action=`/strategies/${strat.id}/edit` method="get")
         button.edit(type="submit") Edit Strategy

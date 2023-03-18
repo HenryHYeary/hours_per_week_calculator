@@ -10,7 +10,6 @@ const app = express();
 const host = "localhost";
 const port = 3000;
 const LokiStore = store(session);
-let strats = require('./lib/seed-data');
 
 app.set("views", "./views");
 app.set("view engine", "pug");
@@ -36,6 +35,18 @@ app.use(session({
 app.use(flash());
 
 app.use((req, res, next) => {
+  let strats = [];
+  if ("strats" in req.session) {
+    req.session.strats.forEach(strat => {
+      strats.push(Strategy.makeStrategy(strat));
+    });
+  }
+
+  req.session.strats = strats;
+  next();
+});
+
+app.use((req, res, next) => {
   res.locals.flash = req.session.flash;
   delete req.session.flash;
   next();
@@ -56,12 +67,12 @@ const sortStrategies = strats => {
   });
 };
 
-const loadStrategy = stratId => {
+const loadStrategy = (stratId, strats) => {
   return strats.find(strat => strat.id === stratId);
 }
 
-const deleteStrategy = stratId => {
-  let strat = loadStrategy(stratId);
+const deleteStrategy = (stratId, strats) => {
+  let strat = loadStrategy(stratId, strats);
   if (!strat) return false;
   let stratIndex = strats.indexOf(strat);
 
@@ -75,7 +86,7 @@ app.get("/", (req, res) => {
 
 app.get("/strategies", (req, res) => {
     res.render("strategies", {
-      strats: sortStrategies(strats),
+      strats: sortStrategies(req.session.strats),
     });
 });
 
@@ -91,8 +102,8 @@ app.post("/strategies",
       .withMessage("The list title is required.")
       .isLength({ max: 100 })
       .withMessage("List title must be between 1 and 100 characters.")
-      .custom(title => {
-        let duplicate = strats.find(strat => strat.title === title);
+      .custom((title, { req }) => {
+        let duplicate = req.session.strats.find(strat => strat.title === title);
         return duplicate === undefined;
       })
       .withMessage("List title must be unique."),
@@ -144,7 +155,8 @@ app.post("/strategies",
         Number(body.vacationDays),
         Number(body.daysToWork),
       ];
-      strats.push(new Strategy(...argArr));
+      let strat = new Strategy(...argArr);
+      req.session.strats.push(Strategy.makeStrategy(strat));
       req.flash("success", "The strategy has been created.");
       res.redirect("/strategies");
     }
@@ -152,21 +164,20 @@ app.post("/strategies",
 
 app.get("/strategies/:stratId", (req, res, next) => {
   let stratId = req.params.stratId;
-  let strat = loadStrategy(+stratId);
-  let hoursPerDay = strat.getHoursNeededPerDay();
+  let strat = loadStrategy(+stratId, req.session.strats);
+  strat.setHoursNeededPerDay();
   if (!strat) {
     next(new Error("Not found."));
   } else {
     res.render("strategy", {
-      strat: strat,
-      hoursPerDay: hoursPerDay
+      strat,
     });
   }
 });
 
 app.get("/strategies/:stratId/edit", (req, res, next) => {
   let stratId = req.params.stratId;
-  let strat = loadStrategy(+stratId);
+  let strat = loadStrategy(+stratId, req.session.strats);
   if (!strat) {
     next(new Error("Not found."));
   } else {
@@ -176,7 +187,7 @@ app.get("/strategies/:stratId/edit", (req, res, next) => {
 
 app.post("/strategies/:stratId/destroy", (req, res, next) => {
   let stratId = req.params.stratId;
-  let deleted = deleteStrategy(+stratId);
+  let deleted = deleteStrategy(+stratId, req.session.strats);
   if (!deleted) {
     next(new Error("Not found."));
   } else {
@@ -193,8 +204,8 @@ app.post("/strategies/:stratId/edit",
       .withMessage("The list title is required.")
       .isLength({ max: 100 })
       .withMessage("List title must be between 1 and 100 characters.")
-      .custom(title => {
-        let duplicate = strats.find(strat => strat.title === title);
+      .custom((title, { req }) => {
+        let duplicate = req.session.strats.find(strat => strat.title === title);
         return duplicate === undefined;
       })
       .withMessage("List title must be unique."),
@@ -225,7 +236,7 @@ app.post("/strategies/:stratId/edit",
   ],
   (req, res, next) => {
     let stratId = req.params.stratId;
-    let strat = loadStrategy(+stratId);
+    let strat = loadStrategy(+stratId, req.session.strats);
     if (!strat) next(new Error("Not found."));
     let body = req.body;
     let { stratTitle, startDate, targetDate, hoursLeft, vacationDays, daysToWork } = body;
@@ -246,20 +257,21 @@ app.post("/strategies/:stratId/edit",
       strat.setStratTitle(stratTitle);
       strat.setStartDate(startDate);
       strat.setTargetDate(targetDate);
-      strat.setHoursLeft(hoursLeft);
-      strat.setVacationDays(vacationDays);
-      strat.setDaysToWork(daysToWork);
+      strat.setHoursLeft(Number(hoursLeft));
+      strat.setVacationDays(Number(vacationDays));
+      strat.setDaysToWork(Number(daysToWork));
+      strat.setHoursNeededPerDay();
       req.flash("success", "The strategy has been updated.");
       res.redirect(`/strategies/${stratId}`);
     }
 });
 
 app.use((err, req, res, _next) => {
-  console.log(err); // Writes more extensive information to the console log
+  console.log(err);
   res.status(404).send(err.message);
 });
 
 
 app.listen(port, host, () => {
-  console.log(`Todos is listening on port ${port} of ${host}!`);
+  console.log(`Hours Per Week Calculator is listening on port ${port} of ${host}!`);
 });
