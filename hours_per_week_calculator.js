@@ -129,8 +129,8 @@ app.post("/strategies",
       .withMessage("Number of vacation days must be a positive integer."),
     body("daysToWork")
       .trim()
-      .isInt()
-      .withMessage("Days planned to work per week must be a positive integer.")
+      .isInt({ min: 1, max: 7 })
+      .withMessage("Days planned to work per week must be a positive integer between 1 and 7.")
   ],
   (req, res) => {
     let errors = validationResult(req);
@@ -231,8 +231,8 @@ app.post("/strategies/:stratId/edit",
       .withMessage("Number of vacation days must be a positive integer."),
     body("daysToWork")
       .trim()
-      .isInt()
-      .withMessage("Days planned to work per week must be a positive integer.")
+      .isInt({ min: 1, max: 7 })
+      .withMessage("Days planned to work per week must be a positive integer between 1 and 7.")
   ],
   (req, res, next) => {
     let stratId = req.params.stratId;
