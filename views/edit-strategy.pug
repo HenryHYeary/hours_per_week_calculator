@@ -11,14 +11,6 @@ block main
 
   form(action=`/strategies/${strat.id}/edit` method="post")
     dl
-      dt
-        label(for="stratTitle") Enter the new name for your new strategy:
-      dd
-        input(type="text"
-              id="stratTitle"
-              name="stratTitle"
-              placeholder="Strategy Title"
-              value=stratTitle || strat.stratTitle)
       dt 
         label(for="startDate") Enter your new starting date.
       dd

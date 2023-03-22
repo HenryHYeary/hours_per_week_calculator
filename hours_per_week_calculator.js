@@ -198,17 +198,6 @@ app.post("/strategies/:stratId/destroy", (req, res, next) => {
 
 app.post("/strategies/:stratId/edit",
   [
-    body("stratTitle")
-      .trim()
-      .isLength({ min: 1 })
-      .withMessage("The list title is required.")
-      .isLength({ max: 100 })
-      .withMessage("List title must be between 1 and 100 characters.")
-      .custom((title, { req }) => {
-        let duplicate = req.session.strats.find(strat => strat.title === title);
-        return duplicate === undefined;
-      })
-      .withMessage("List title must be unique."),
     body("startDate")
       .trim()
       .isLength({ min: 1 })
@@ -239,14 +228,13 @@ app.post("/strategies/:stratId/edit",
     let strat = loadStrategy(+stratId, req.session.strats);
     if (!strat) next(new Error("Not found."));
     let body = req.body;
-    let { stratTitle, startDate, targetDate, hoursLeft, vacationDays, daysToWork } = body;
+    let { startDate, targetDate, hoursLeft, vacationDays, daysToWork } = body;
     let errors = validationResult(req);
     if (!errors.isEmpty()) {
       errors.array().forEach(message => req.flash("error", message.msg));
       res.render("edit-strategy", {
         flash: req.flash(),
         strat,
-        stratTitle,
         targetDate,
         startDate,
         hoursLeft,
@@ -254,7 +242,6 @@ app.post("/strategies/:stratId/edit",
         daysToWork,
       });
     } else {
-      strat.setStratTitle(stratTitle);
       strat.setStartDate(startDate);
       strat.setTargetDate(targetDate);
       strat.setHoursLeft(Number(hoursLeft));
