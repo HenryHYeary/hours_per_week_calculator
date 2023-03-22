@@ -5,4 +5,4 @@ To launch the application, please run 'npm install' followed by 'npm start' in t
 
 The CSS is pretty rudimentary but the applicaiton itself should function properly and give you an accurate number of hours to study per day to achieve your goals by a certain date.
 
-This version of the hours per week calculator uses session permanence only and not a database. A new version will be completed soon that supports PostgreSQL databases.
+This version of the hours per week calculator uses session permanence only and not a database. Here is a link to a version that is compatible with PostgreSQL databases https://github.com/HenryHYeary/hours_per_week_calc_db_backed.
